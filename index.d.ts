@@ -7,5 +7,10 @@ export interface PartialHashGlobOptions {
   cwd?: string
   gitignore?: boolean
 }
-export function hashGlobParallel(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint> | null
+export interface PartialHashGlobParallelOptions {
+  cwd?: string
+  gitignore?: boolean
+  concurrency?: number
+}
 export function hashGlob(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint> | null
+export function hashGlobParallel(globs: Array<string>, maybeOptions?: PartialHashGlobParallelOptions | undefined | null): Record<string, bigint> | null
