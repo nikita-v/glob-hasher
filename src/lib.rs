@@ -7,7 +7,6 @@ mod config;
 mod hasher;
 
 pub mod glob_hasher {
-
   use crate::config::{
     get_hash_glob_config, PartialHashGlobOptions, PartialHashGlobParallelOptions, get_hash_glob_parallel_config,
   };
