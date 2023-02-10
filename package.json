@@ -4,8 +4,13 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "glob-hasher",
-    "triples": {}
+    "name": "test-napi",
+    "triples": {
+      "additional": [
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc"
+      ]
+    }
   },
   "license": "MIT",
   "devDependencies": {
