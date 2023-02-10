@@ -10,7 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.14.7",
-    "ava": "^5.1.1"
+    "jest": "^29.4.2"
   },
   "ava": {
     "timeout": "3m"
@@ -23,7 +23,7 @@
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "node __test__/index.mjs",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
     "universal": "napi universal",
     "version": "napi version"
   },

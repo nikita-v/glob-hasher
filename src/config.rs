@@ -41,7 +41,9 @@ pub struct HashGlobParallelOptions {
   pub concurrency: usize,
 }
 
-pub fn get_hash_glob_parallel_config(maybe_options: Option<PartialHashGlobParallelOptions>) -> HashGlobParallelOptions {
+pub fn get_hash_glob_parallel_config(
+  maybe_options: Option<PartialHashGlobParallelOptions>,
+) -> HashGlobParallelOptions {
   let mut options = HashGlobParallelOptions {
     cwd: ".".to_string(),
     gitignore: true,
@@ -55,6 +57,10 @@ pub fn get_hash_glob_parallel_config(maybe_options: Option<PartialHashGlobParall
 
     if let Some(gitignore) = passed_in_options.gitignore {
       options.gitignore = gitignore;
+    }
+
+    if let Some(concurrency) = passed_in_options.concurrency {
+      options.concurrency = usize::try_from(concurrency).unwrap();
     }
   }
 
