@@ -7,4 +7,5 @@ export interface PartialHashGlobOptions {
   cwd?: string
   gitignore?: boolean
 }
-export function hashGlob(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Array<bigint> | null
+export function hashGlobParallel(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint> | null
+export function hashGlob(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint> | null
