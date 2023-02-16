@@ -2,6 +2,7 @@
   "name": "glob-hasher",
   "version": "1.0.0",
   "main": "index.js",
+  "description": "A simple glob hasher for Node.js, uses Rust for faster globbing and hashing",
   "types": "index.d.ts",
   "napi": {
     "name": "glob-hasher",
