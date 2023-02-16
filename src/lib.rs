@@ -8,7 +8,8 @@ mod hasher;
 
 pub mod glob_hasher {
   use crate::config::{
-    get_hash_glob_config, PartialHashGlobOptions, PartialHashGlobParallelOptions, get_hash_glob_parallel_config,
+    get_hash_glob_config, get_hash_glob_parallel_config, PartialHashGlobOptions,
+    PartialHashGlobParallelOptions,
   };
   use crate::hasher;
   use std::collections::HashMap;
