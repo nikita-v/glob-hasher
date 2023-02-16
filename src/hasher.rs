@@ -1,8 +1,8 @@
 use dashmap::DashMap;
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
-use std::{collections::HashMap, sync::Arc};
 use std::fs;
+use std::{collections::HashMap, sync::Arc};
 use xxhash_rust::xxh3;
 
 use crate::config::{HashGlobOptions, HashGlobParallelOptions};
@@ -24,12 +24,19 @@ pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<St
       .git_ignore(gitignore)
       .build();
 
-    for dir_entry_result in walker {   
+    for dir_entry_result in walker {
       if let Ok(dir_entry) = dir_entry_result {
         if dir_entry.path().is_file() {
-          let contents = fs::read_to_string(dir_entry.path()).unwrap();
+          let contents = fs::read_to_string(dir_entry.path())
+            .unwrap()
+            .replace("\r\n", "\n");
           hashes.insert(
-            dir_entry.path().strip_prefix(&cwd).unwrap().to_string_lossy().to_string(),
+            dir_entry
+              .path()
+              .strip_prefix(&cwd)
+              .unwrap()
+              .to_string_lossy()
+              .to_string(),
             xxh3::xxh3_64(&contents.as_bytes()),
           );
         }
@@ -74,9 +81,16 @@ pub fn parallel(
 
           if let Ok(dir_entry) = dir_entry_result {
             if dir_entry.path().is_file() {
-              let contents = fs::read_to_string(dir_entry.path()).unwrap();
+              let contents = fs::read_to_string(dir_entry.path())
+                .unwrap()
+                .replace("\r\n", "\n");
               map.insert(
-                dir_entry.path().strip_prefix(&base_cwd).unwrap().to_string_lossy().to_string(),
+                dir_entry
+                  .path()
+                  .strip_prefix(&base_cwd)
+                  .unwrap()
+                  .to_string_lossy()
+                  .to_string(),
                 xxh3::xxh3_64(&contents.as_bytes()),
               );
             }
