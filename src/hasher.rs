@@ -17,6 +17,8 @@ pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<St
     override_builder.add(&glob).unwrap();
   }
 
+  override_builder.add("!.git/**").unwrap();
+
   if let Ok(overrides) = override_builder.build() {
     let mut hashes: HashMap<String, u64> = HashMap::new();
 
@@ -64,6 +66,8 @@ pub fn parallel(
   for glob in globs {
     override_builder.add(&glob).unwrap();
   }
+
+  override_builder.add("!.git/**").unwrap();
 
   if let Ok(overrides) = override_builder.build() {
     let hashes = Arc::new(DashMap::<String, u64>::new());
