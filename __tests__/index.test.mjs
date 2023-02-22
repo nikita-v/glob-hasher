@@ -53,9 +53,30 @@ describe("hash glob parallel", () => {
 
     expect(map).toMatchInlineSnapshot(`
 {
+  ".hiddenfile": 9323281055126355666n,
   "a.json": 11810798349410098695n,
   "a.png": 4573747350076585403n,
   "a.txt": 13554666155361377856n,
+}
+`);
+  });
+
+  it("should calculate the hash of dot files", () => {
+    const map = hashGlob(
+      [],
+      {
+        cwd: path.join(__dirname, "fixtures"),
+        concurrency: 200,
+      }
+    );
+
+    expect(map).toMatchInlineSnapshot(`
+{
+  ".hiddenfile": 9323281055126355666n,
+  "a.json": 11810798349410098695n,
+  "a.png": 4573747350076585403n,
+  "a.txt": 13554666155361377856n,
+  "b.txt": 11083092647103983954n,
 }
 `);
   });
