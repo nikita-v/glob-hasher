@@ -23,6 +23,7 @@ pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<St
     let walker = WalkBuilder::new(&cwd)
       .overrides(overrides)
       .git_ignore(gitignore)
+      .hidden(false)
       .build();
 
     for dir_entry_result in walker {
@@ -70,6 +71,7 @@ pub fn parallel(
     WalkBuilder::new(&cwd)
       .overrides(overrides)
       .git_ignore(gitignore)
+      .hidden(false)
       .threads(concurrency)
       .build_parallel()
       .run(|| {
