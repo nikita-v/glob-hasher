@@ -18,6 +18,7 @@ describe("hash glob parallel", () => {
     expect(map).toMatchInlineSnapshot(`
 {
   "a.json": 11810798349410098695n,
+  "a.png": 4573747350076585403n,
   "a.txt": 13554666155361377856n,
 }
 `);
@@ -35,6 +36,7 @@ describe("hash glob parallel", () => {
     expect(map).toMatchInlineSnapshot(`
 {
   "a.json": 11810798349410098695n,
+  "a.png": 4573747350076585403n,
   "a.txt": 13554666155361377856n,
 }
 `);
@@ -52,6 +54,7 @@ describe("hash glob parallel", () => {
     expect(map).toMatchInlineSnapshot(`
 {
   "a.json": 11810798349410098695n,
+  "a.png": 4573747350076585403n,
   "a.txt": 13554666155361377856n,
 }
 `);

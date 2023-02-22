@@ -2,6 +2,7 @@ use dashmap::DashMap;
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use std::fs;
+use std::path::Path;
 use std::{collections::HashMap, sync::Arc};
 use xxhash_rust::xxh3;
 
@@ -27,9 +28,7 @@ pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<St
     for dir_entry_result in walker {
       if let Ok(dir_entry) = dir_entry_result {
         if dir_entry.path().is_file() {
-          let contents = fs::read_to_string(dir_entry.path())
-            .unwrap()
-            .replace("\r\n", "\n");
+          let contents = read_file(dir_entry.path()).expect("Failed to read file");
           hashes.insert(
             dir_entry
               .path()
@@ -37,7 +36,7 @@ pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<St
               .unwrap()
               .to_string_lossy()
               .to_string(),
-            xxh3::xxh3_64(&contents.as_bytes()),
+            xxh3::xxh3_64(&contents),
           );
         }
       }
@@ -81,9 +80,7 @@ pub fn parallel(
 
           if let Ok(dir_entry) = dir_entry_result {
             if dir_entry.path().is_file() {
-              let contents = fs::read_to_string(dir_entry.path())
-                .unwrap()
-                .replace("\r\n", "\n");
+              let contents = read_file(dir_entry.path()).expect("Failed to read file");
               map.insert(
                 dir_entry
                   .path()
@@ -91,7 +88,7 @@ pub fn parallel(
                   .unwrap()
                   .to_string_lossy()
                   .to_string(),
-                xxh3::xxh3_64(&contents.as_bytes()),
+                xxh3::xxh3_64(&contents),
               );
             }
           }
@@ -105,4 +102,56 @@ pub fn parallel(
   }
 
   return None;
+}
+
+fn read_file(path: &Path) -> Result<Vec<u8>, anyhow::Error> {
+  let read_bytes = fs::read(path);
+
+  let mut result = Vec::new();
+  let mut prev_byte: Option<u8> = None;
+
+  if let Ok(ref bytes) = read_bytes {
+    if is_binary(bytes) {
+      return Ok(bytes.clone());
+    }
+  }
+
+  if let Ok(ref bytes) = read_bytes {
+    for byte in bytes.clone() {
+      match (prev_byte, byte) {
+        (Some(b'\r'), b'\n') => {}
+        (None, _) => {}
+        (Some(ref b), _) => {
+          // println!("normal byte: {:?}", b as char);
+          // Not a CRLF, add previous byte to output vector
+          result.push(b.clone());
+        }
+      }
+
+      prev_byte = Some(byte);
+    }
+
+    // Add last byte to output vector if it was not a CR
+    if let Some(byte) = prev_byte {
+      if byte != b'\r' {
+        result.push(byte);
+      }
+    }
+  } else {
+    return Err(anyhow::anyhow!("Failed to read file"));
+  }
+
+  Ok(result)
+}
+
+// Same rule as git in detecting whether or not the file is binary
+fn is_binary(bytes: &Vec<u8>) -> bool {
+  let first_few_bytes = bytes.iter().take(8000);
+  for byte in first_few_bytes {
+    if byte == &b'\0' {
+      return true;
+    }
+  }
+
+  false
 }
