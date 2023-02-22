@@ -19,3 +19,7 @@ hashGlob(["**/*.ts"], {
   gitignore: true
 });
 ```
+
+## Releasing
+
+Be sure to use `npm version` to create a new git tag.
