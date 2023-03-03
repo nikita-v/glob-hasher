@@ -1,6 +1,6 @@
 {
   "name": "glob-hasher",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "main": "index.js",
   "description": "A simple glob hasher for Node.js, uses Rust for faster globbing and hashing",
   "types": "index.d.ts",
