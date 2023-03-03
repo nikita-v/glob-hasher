@@ -1,110 +1,71 @@
-use dashmap::DashMap;
-use ignore::overrides::OverrideBuilder;
-use ignore::WalkBuilder;
+use dashmap::{DashMap, DashSet};
+use gix::features::hash::hasher;
+use gix::objs::encode::loose_header;
+use rayon::prelude::*;
+
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{collections::HashMap, sync::Arc};
 use xxhash_rust::xxh3;
 
-use crate::config::{HashGlobOptions, HashGlobParallelOptions};
+pub fn xxhash(
+  file_set: DashSet<PathBuf>,
+  cwd: &str,
+) -> Option<HashMap<String, u64>> {
+  let cwd: String = cwd.into();
+  let hashes = Arc::new(DashMap::<String, u64>::new());
 
-pub fn serial(globs: Vec<String>, options: HashGlobOptions) -> Option<HashMap<String, u64>> {
-  let HashGlobOptions { cwd, gitignore } = options;
+  file_set.into_par_iter().for_each(|file_path| {
+    let map = hashes.clone();
+    let base_cwd = cwd.clone();
+    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
+    map.insert(
+      file_path
+        .strip_prefix(&base_cwd)
+        .unwrap()
+        .to_string_lossy()
+        .to_string()
+        .replace("\\", "/"),
+      xxh3::xxh3_64(&bytes),
+    );
+  });
 
-  let mut override_builder = OverrideBuilder::new(cwd.clone());
-
-  for glob in globs {
-    override_builder.add(&glob).unwrap();
-  }
-
-  override_builder.add("!.git/**").unwrap();
-
-  if let Ok(overrides) = override_builder.build() {
-    let mut hashes: HashMap<String, u64> = HashMap::new();
-
-    let walker = WalkBuilder::new(&cwd)
-      .overrides(overrides)
-      .git_ignore(gitignore)
-      .hidden(false)
-      .build();
-
-    for dir_entry_result in walker {
-      if let Ok(dir_entry) = dir_entry_result {
-        if dir_entry.path().is_file() {
-          let contents = read_file(dir_entry.path()).expect("Failed to read file");
-          hashes.insert(
-            dir_entry
-              .path()
-              .strip_prefix(&cwd)
-              .unwrap()
-              .to_string_lossy()
-              .to_string(),
-            xxh3::xxh3_64(&contents),
-          );
-        }
-      }
-    }
-
-    return Some(hashes);
+  if let Ok(map) = Arc::try_unwrap(hashes) {
+    return Some(map.into_iter().collect::<HashMap<String, u64>>());
   }
 
   return None;
 }
 
-pub fn parallel(
-  globs: Vec<String>,
-  options: HashGlobParallelOptions,
-) -> Option<HashMap<String, u64>> {
-  let HashGlobParallelOptions {
-    cwd,
-    gitignore,
-    concurrency,
-  } = options;
+pub fn git_hash(
+  file_set: DashSet<PathBuf>,
+  cwd: &str,
+) -> Option<HashMap<String, String>> {
+  let cwd: String = cwd.into();
+  let hashes = Arc::new(DashMap::<String, String>::new());
 
-  let mut override_builder = OverrideBuilder::new(cwd.clone());
+  file_set.into_par_iter().for_each(|file_path| {
+    let map = hashes.clone();
+    let base_cwd = cwd.clone();
 
-  for glob in globs {
-    override_builder.add(&glob).unwrap();
-  }
+    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
+    let mut hasher = hasher(gix::hash::Kind::Sha1);
+    hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
+    hasher.update(&bytes);
 
-  override_builder.add("!.git/**").unwrap();
+    map.insert(
+      file_path
+        .strip_prefix(&base_cwd)
+        .unwrap()
+        .to_string_lossy()
+        .to_string()
+        .replace("\\", "/"),
+      hex::encode(hasher.digest()),
+    );
+  });
 
-  if let Ok(overrides) = override_builder.build() {
-    let hashes = Arc::new(DashMap::<String, u64>::new());
-
-    WalkBuilder::new(&cwd)
-      .overrides(overrides)
-      .git_ignore(gitignore)
-      .hidden(false)
-      .threads(concurrency)
-      .build_parallel()
-      .run(|| {
-        let map = hashes.clone();
-        let base_cwd = cwd.clone();
-        Box::new(move |dir_entry_result| {
-          use ignore::WalkState::*;
-
-          if let Ok(dir_entry) = dir_entry_result {
-            if dir_entry.path().is_file() {
-              let contents = read_file(dir_entry.path()).expect("Failed to read file");
-              map.insert(
-                dir_entry
-                  .path()
-                  .strip_prefix(&base_cwd)
-                  .unwrap()
-                  .to_string_lossy()
-                  .to_string(),
-                xxh3::xxh3_64(&contents),
-              );
-            }
-          }
-          Continue
-        })
-      });
-
-    if let Ok(map) = Arc::try_unwrap(hashes) {
-      return Some(map.into_iter().collect::<HashMap<String, u64>>());
-    }
+  if let Ok(map) = Arc::try_unwrap(hashes) {
+    return Some(map.into_iter().collect::<HashMap<String, String>>());
   }
 
   return None;

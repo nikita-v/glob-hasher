@@ -246,7 +246,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { hashGlob, hashGlobParallel } = nativeBinding
+const { hashGlobXxhash, hashGlobGit, glob } = nativeBinding
 
-module.exports.hashGlob = hashGlob
-module.exports.hashGlobParallel = hashGlobParallel
+module.exports.hashGlobXxhash = hashGlobXxhash
+module.exports.hashGlobGit = hashGlobGit
+module.exports.glob = glob
