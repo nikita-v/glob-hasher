@@ -71,6 +71,42 @@ pub fn git_hash(
   return None;
 }
 
+
+
+pub fn git_hash_vec(
+  files: Vec<PathBuf>,
+  cwd: &str,
+) -> Option<HashMap<String, String>> {
+  let cwd: String = cwd.into();
+  let hashes = Arc::new(DashMap::<String, String>::new());
+
+  files.into_par_iter().for_each(|file_path| {
+    let map = hashes.clone();
+    let base_cwd = cwd.clone();
+
+    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
+    let mut hasher = hasher(gix::hash::Kind::Sha1);
+    hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
+    hasher.update(&bytes);
+
+    map.insert(
+      file_path
+        .strip_prefix(&base_cwd)
+        .unwrap()
+        .to_string_lossy()
+        .to_string()
+        .replace("\\", "/"),
+      hex::encode(hasher.digest()),
+    );
+  });
+
+  if let Ok(map) = Arc::try_unwrap(hashes) {
+    return Some(map.into_iter().collect::<HashMap<String, String>>());
+  }
+
+  return None;
+}
+
 fn read_file(path: &Path) -> Result<Vec<u8>, anyhow::Error> {
   let read_bytes = fs::read(path);
 
