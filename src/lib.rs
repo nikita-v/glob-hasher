@@ -12,7 +12,7 @@ pub mod glob_hasher {
   use crate::glob::glob as glob_fn;
   use crate::hasher;
   use std::collections::HashMap;
-  use std::path::PathBuf;
+  use std::path::{Path, PathBuf};
 
   #[napi]
   pub fn hash_glob_xxhash(
@@ -68,7 +68,18 @@ pub mod glob_hasher {
         .unwrap_or_default();
     }
 
-    let file_set: Vec<PathBuf> = files.iter().map(|f| PathBuf::from(&f)).collect();
+    // handle relative paths as inputs
+    let file_set: Vec<PathBuf> = files
+      .iter()
+      .map(|f| {
+        let file_path = Path::new(&f);
+        if file_path.is_relative() {
+          return Path::join(Path::new(&options.cwd), &file_path).to_path_buf();
+        }
+
+        file_path.to_path_buf()
+      })
+      .collect();
 
     hasher::git_hash_vec(file_set, options.cwd.as_str())
   }
