@@ -12,3 +12,8 @@ export function hashGlobXxhash(globs: Array<string>, maybeOptions?: PartialHashG
 export function hashGlobGit(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string> | null
 export function hash(files: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string> | null
 export function glob(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Array<string> | null
+export interface StatEntry {
+  mtime: bigint
+  size: number
+}
+export function stat(files: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, StatEntry> | null
