@@ -24,7 +24,7 @@ pub mod glob_hasher {
   pub fn hash_glob_xxhash(
     globs: Vec<String>,
     maybe_options: Option<PartialHashGlobOptions>,
-  ) -> Option<HashMap<String, u64>> {
+  ) -> Option<HashMap<String, Option<u64>>> {
     let options = get_hash_glob_config(maybe_options);
 
     if let Some(concurrency) = options.concurrency {
@@ -44,7 +44,7 @@ pub mod glob_hasher {
   pub fn hash_glob_git(
     globs: Vec<String>,
     maybe_options: Option<PartialHashGlobOptions>,
-  ) -> Option<HashMap<String, String>> {
+  ) -> Option<HashMap<String, Option<String>>> {
     let options = get_hash_glob_config(maybe_options);
 
     if let Some(concurrency) = options.concurrency {
@@ -64,7 +64,7 @@ pub mod glob_hasher {
   pub fn hash(
     files: Vec<String>,
     maybe_options: Option<PartialHashGlobOptions>,
-  ) -> Option<HashMap<String, String>> {
+  ) -> Option<HashMap<String, Option<String>>> {
     let options = get_hash_glob_config(maybe_options);
 
     if let Some(concurrency) = options.concurrency {
