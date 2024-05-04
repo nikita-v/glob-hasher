@@ -8,9 +8,9 @@ export interface PartialHashGlobOptions {
   gitignore?: boolean
   concurrency?: number
 }
-export function hashGlobXxhash(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint> | null
-export function hashGlobGit(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string> | null
-export function hash(files: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string> | null
+export function hashGlobXxhash(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, bigint | undefined | null> | null
+export function hashGlobGit(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string | undefined | null> | null
+export function hash(files: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Record<string, string | undefined | null> | null
 export function glob(globs: Array<string>, maybeOptions?: PartialHashGlobOptions | undefined | null): Array<string> | null
 export interface StatEntry {
   mtime: bigint

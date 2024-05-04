@@ -1,7 +1,7 @@
 import "@jest/globals";
 import path from "path";
 import { fileURLToPath } from "url";
-import { hashGlobGit, hashGlobXxhash } from "../index.js";
+import { hash, hashGlobGit, hashGlobXxhash } from "../index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -64,7 +64,21 @@ describe("hash glob xxhash", () => {
   });
 });
 
+describe("hash", () => {
+  it("should not panic when hashing a non-existent file", () => {
+    expect(hash(["non-existent-file"])).toMatchInlineSnapshot(`
+{
+  "non-existent-file": null,
+}
+`);
+  });
+});
+
 describe("hash glob git hash", () => {
+  it("should not panic when hashing a non-existent file", () => {
+    expect(hashGlobGit(["non-existent-file"])).toMatchInlineSnapshot(`{}`);
+  });
+
   it("should calculate the hash in parallel consistently", () => {
     const map = hashGlobGit(["a.*"], {
       cwd: path.join(__dirname, "fixtures"),

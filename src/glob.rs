@@ -10,7 +10,7 @@ pub fn glob(globs: Vec<String>, options: &HashGlobOptions) -> Option<DashSet<Pat
     cwd,
     gitignore,
     concurrency,
-  } = options.clone();
+  } = options;
 
   let mut override_builder = OverrideBuilder::new(cwd.clone());
 

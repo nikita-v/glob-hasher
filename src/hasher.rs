@@ -8,103 +8,96 @@ use std::path::{Path, PathBuf};
 use std::{collections::HashMap, sync::Arc};
 use xxhash_rust::xxh3;
 
-pub fn xxhash(
-  file_set: DashSet<PathBuf>,
-  cwd: &str,
-) -> Option<HashMap<String, u64>> {
+pub fn xxhash(file_set: DashSet<PathBuf>, cwd: &str) -> Option<HashMap<String, Option<u64>>> {
   let cwd: String = cwd.into();
-  let hashes = Arc::new(DashMap::<String, u64>::new());
-
-  file_set.into_par_iter().for_each(|file_path| {
-    let map = hashes.clone();
-    let base_cwd = cwd.clone();
-    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
-    map.insert(
-      file_path
-        .strip_prefix(&base_cwd)
-        .unwrap()
-        .to_string_lossy()
-        .to_string()
-        .replace("\\", "/"),
-      xxh3::xxh3_64(&bytes),
-    );
-  });
-
-  if let Ok(map) = Arc::try_unwrap(hashes) {
-    return Some(map.into_iter().collect::<HashMap<String, u64>>());
-  }
-
-  return None;
-}
-
-pub fn git_hash(
-  file_set: DashSet<PathBuf>,
-  cwd: &str,
-) -> Option<HashMap<String, String>> {
-  let cwd: String = cwd.into();
-  let hashes = Arc::new(DashMap::<String, String>::new());
+  let hashes = Arc::new(DashMap::<String, Option<u64>>::new());
 
   file_set.into_par_iter().for_each(|file_path| {
     let map = hashes.clone();
     let base_cwd = cwd.clone();
 
-    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
-    let mut hasher = hasher(gix::hash::Kind::Sha1);
-    hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
-    hasher.update(&bytes);
+    let bytes_results = read_file(file_path.as_path());
+    let key = normalize_path(&base_cwd, file_path);
 
-    map.insert(
-      file_path
-        .strip_prefix(&base_cwd)
-        .unwrap()
-        .to_string_lossy()
-        .to_string()
-        .replace("\\", "/"),
-      hex::encode(hasher.digest()),
-    );
+    if let Ok(bytes) = bytes_results {
+      map.insert(key, Some(xxh3::xxh3_64(&bytes)));
+    } else {
+      map.insert(key, None);
+    }
   });
 
   if let Ok(map) = Arc::try_unwrap(hashes) {
-    return Some(map.into_iter().collect::<HashMap<String, String>>());
+    return Some(map.into_iter().collect::<HashMap<String, Option<u64>>>());
   }
 
   return None;
 }
 
-
-
-pub fn git_hash_vec(
-  files: Vec<PathBuf>,
-  cwd: &str,
-) -> Option<HashMap<String, String>> {
+pub fn git_hash(file_set: DashSet<PathBuf>, cwd: &str) -> Option<HashMap<String, Option<String>>> {
   let cwd: String = cwd.into();
-  let hashes = Arc::new(DashMap::<String, String>::new());
+  let hashes = Arc::new(DashMap::<String, Option<String>>::new());
+
+  file_set.into_par_iter().for_each(|file_path| {
+    let map = hashes.clone();
+    let base_cwd = cwd.clone();
+
+    let bytes_results = read_file(file_path.as_path());
+    let key = normalize_path(&base_cwd, file_path);
+
+    if let Ok(bytes) = bytes_results {
+      let mut hasher = hasher(gix::hash::Kind::Sha1);
+      hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
+      hasher.update(&bytes);
+
+      map.insert(key, Some(hex::encode(hasher.digest())));
+    } else {
+      map.insert(key, None);
+    }
+  });
+
+  if let Ok(map) = Arc::try_unwrap(hashes) {
+    return Some(map.into_iter().collect::<HashMap<String, Option<String>>>());
+  }
+
+  return None;
+}
+
+pub fn git_hash_vec(files: Vec<PathBuf>, cwd: &str) -> Option<HashMap<String, Option<String>>> {
+  let cwd: String = cwd.into();
+  let hashes = Arc::new(DashMap::<String, Option<String>>::new());
 
   files.into_par_iter().for_each(|file_path| {
     let map = hashes.clone();
     let base_cwd = cwd.clone();
 
-    let bytes = read_file(file_path.as_path()).expect("Failed to read file");
-    let mut hasher = hasher(gix::hash::Kind::Sha1);
-    hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
-    hasher.update(&bytes);
+    let bytes_results = read_file(file_path.as_path());
+    let key = normalize_path(&base_cwd, file_path);
 
-    map.insert(
-      file_path
-        .strip_prefix(&base_cwd)
-        .unwrap()
-        .to_string_lossy()
-        .to_string()
-        .replace("\\", "/"),
-      hex::encode(hasher.digest()),
-    );
+    if let Ok(bytes) = bytes_results {
+      let mut hasher = hasher(gix::hash::Kind::Sha1);
+      hasher.update(&loose_header(gix::objs::Kind::Blob, bytes.len()));
+      hasher.update(&bytes);
+
+      map.insert(key, Some(hex::encode(hasher.digest())));
+    } else {
+      map.insert(key, None);
+    }
   });
 
   if let Ok(map) = Arc::try_unwrap(hashes) {
-    return Some(map.into_iter().collect::<HashMap<String, String>>());
+    return Some(map.into_iter().collect::<HashMap<String, Option<String>>>());
   }
 
   return None;
+}
+
+fn normalize_path(base_cwd: &str, file_path: PathBuf) -> String {
+  file_path
+    .strip_prefix(&base_cwd)
+    .unwrap()
+    .to_string_lossy()
+    .to_string()
+    .replace("\\", "/")
 }
 
 fn read_file(path: &Path) -> Result<Vec<u8>, anyhow::Error> {
